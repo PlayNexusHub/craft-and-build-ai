@@ -16,7 +16,7 @@ export const AIChat = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      content: "Hello! I'm your AI coding assistant. I can help you create apps, websites, and tools from natural language descriptions. What would you like to build today?",
+      content: "Hello! I'm your PlayNexus AI assistant. I can help you create production-ready applications, games, and tools from natural language descriptions. What would you like to build today?",
       role: "assistant",
       timestamp: new Date(),
     },
@@ -67,8 +67,8 @@ export const AIChat = () => {
             <Sparkles className="w-5 h-5 text-primary-foreground" />
           </div>
           <div>
-            <h2 className="font-semibold text-card-foreground">AI Assistant</h2>
-            <p className="text-sm text-muted-foreground">Local-first code generation</p>
+            <h2 className="font-semibold text-card-foreground">PlayNexus AI Assistant</h2>
+            <p className="text-sm text-muted-foreground">Privacy-first code generation</p>
           </div>
         </div>
       </div>

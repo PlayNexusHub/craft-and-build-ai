@@ -51,8 +51,8 @@ export const AppSidebar = () => {
             <Sparkles className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-bold text-lg text-sidebar-foreground">AI Creator</h1>
-            <p className="text-sm text-sidebar-foreground/70">Local-first app builder</p>
+            <h1 className="font-bold text-lg text-sidebar-foreground">PlayNexus AI</h1>
+            <p className="text-sm text-sidebar-foreground/70">Local-first app creator</p>
           </div>
         </div>
 

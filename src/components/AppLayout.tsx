@@ -3,6 +3,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { AppSidebar } from "./AppSidebar";
 import { AIChat } from "./AIChat";
 import { ProjectWorkspace } from "./ProjectWorkspace";
+import { AppFooter } from "./AppFooter";
 
 export const AppLayout = () => {
   return (
@@ -17,7 +18,7 @@ export const AppLayout = () => {
           <header className="h-14 border-b border-border bg-card flex items-center px-4">
             <SidebarTrigger />
             <div className="ml-4">
-              <h2 className="font-semibold text-card-foreground">AI App Creator</h2>
+              <h2 className="font-semibold text-card-foreground">PlayNexus AI Creator</h2>
             </div>
           </header>
 
@@ -33,7 +34,12 @@ export const AppLayout = () => {
               
               {/* Workspace Panel */}
               <ResizablePanel defaultSize={65} minSize={50}>
-                <ProjectWorkspace />
+                <div className="flex flex-col h-full">
+                  <div className="flex-1">
+                    <ProjectWorkspace />
+                  </div>
+                  <AppFooter />
+                </div>
               </ResizablePanel>
             </ResizablePanelGroup>
           </div>
