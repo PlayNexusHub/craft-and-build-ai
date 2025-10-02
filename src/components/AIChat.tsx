@@ -1,126 +1,119 @@
-import { useState } from "react";
-import { Send, Sparkles, Code2 } from "lucide-react";
+/**
+ * AI Chat Component - Refactored for production
+ * Features:
+ * - Type-safe message handling
+ * - Input validation and sanitization
+ * - Error handling with user feedback
+ * - Accessibility improvements (ARIA labels, keyboard nav)
+ * - Proper loading states
+ * @module components/AIChat
+ */
+
+import { useState, useRef, useEffect } from "react";
+import { Send, Sparkles, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ChatMessage } from "@/components/ChatMessage";
+import { useChat } from "@/hooks/useChat";
 
-interface Message {
-  id: string;
-  content: string;
-  role: "user" | "assistant";
-  timestamp: Date;
-}
-
+/**
+ * Main chat interface component
+ * Handles user interaction with AI assistant
+ */
 export const AIChat = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      content: "Hello! I'm your PlayNexus AI assistant. I can help you create production-ready applications, games, and tools from natural language descriptions. What would you like to build today?",
-      role: "assistant",
-      timestamp: new Date(),
-    },
-  ]);
   const [input, setInput] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  const { messages, isGenerating, error, sendMessage, clearMessages, retryLastMessage } = useChat({
+    onError: (err) => {
+      console.error("Chat error:", err);
+    },
+    onSuccess: () => {
+      setInput("");
+      inputRef.current?.focus();
+    },
+  });
 
+  /**
+   * Auto-scroll to bottom when new messages arrive
+   */
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  /**
+   * Handles message submission with validation
+   */
   const handleSendMessage = async () => {
-    if (!input.trim()) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: input,
-      role: "user",
-      timestamp: new Date(),
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInput("");
-    setIsGenerating(true);
-
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        content: `I'll help you create that! Let me analyze your request and generate the code structure. This is a demo response - in the full version, I would connect to local or cloud AI models to generate your app.`,
-        role: "assistant",
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, aiResponse]);
-      setIsGenerating(false);
-    }, 2000);
+    if (!input.trim() || isGenerating) return;
+    await sendMessage(input);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  /**
+   * Handles keyboard shortcuts
+   * Enter: Send message
+   * Ctrl/Cmd + K: Clear messages
+   */
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
+    
+    if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      e.preventDefault();
+      clearMessages();
+    }
   };
 
   return (
-    <div className="flex flex-col h-full bg-card border-r border-border">
+    <div className="flex flex-col h-full bg-card border-r border-border" role="region" aria-label="AI Chat">
       {/* Header */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-gradient-primary rounded-lg">
-            <Sparkles className="w-5 h-5 text-primary-foreground" />
+      <header className="p-4 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-gradient-primary rounded-lg" aria-hidden="true">
+              <Sparkles className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-card-foreground">PlayNexus AI Assistant</h2>
+              <p className="text-sm text-muted-foreground">Privacy-first code generation</p>
+            </div>
           </div>
-          <div>
-            <h2 className="font-semibold text-card-foreground">PlayNexus AI Assistant</h2>
-            <p className="text-sm text-muted-foreground">Privacy-first code generation</p>
-          </div>
+          
+          {error && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={retryLastMessage}
+              className="text-destructive hover:text-destructive"
+              aria-label="Retry last message"
+            >
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Retry
+            </Button>
+          )}
         </div>
-      </div>
+      </header>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-4" ref={scrollRef} role="log" aria-live="polite" aria-atomic="false">
         <div className="space-y-4">
           {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex gap-3 ${
-                message.role === "user" ? "justify-end" : "justify-start"
-              }`}
-            >
-              {message.role === "assistant" && (
-                <Avatar className="w-8 h-8 bg-gradient-accent">
-                  <AvatarFallback className="bg-transparent text-accent-foreground">
-                    <Code2 className="w-4 h-4" />
-                  </AvatarFallback>
-                </Avatar>
-              )}
-              <div
-                className={`max-w-[80%] rounded-lg p-3 ${
-                  message.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                <p className={`text-xs mt-1 opacity-70`}>
-                  {message.timestamp.toLocaleTimeString()}
-                </p>
-              </div>
-              {message.role === "user" && (
-                <Avatar className="w-8 h-8">
-                  <AvatarFallback>U</AvatarFallback>
-                </Avatar>
-              )}
-            </div>
+            <ChatMessage key={message.id} message={message} />
           ))}
+          
           {isGenerating && (
-            <div className="flex gap-3 justify-start">
-              <Avatar className="w-8 h-8 bg-gradient-accent">
-                <AvatarFallback className="bg-transparent text-accent-foreground">
-                  <Code2 className="w-4 h-4" />
-                </AvatarFallback>
-              </Avatar>
+            <div className="flex gap-3 justify-start" role="status" aria-label="AI is generating a response">
+              <div className="w-8 h-8 bg-gradient-accent rounded-full flex items-center justify-center" aria-hidden="true">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-accent-foreground border-t-transparent"></div>
+              </div>
               <div className="bg-muted rounded-lg p-3 max-w-[80%]">
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-muted-foreground border-t-transparent"></div>
-                  <p className="text-sm text-muted-foreground">Generating response...</p>
-                </div>
+                <p className="text-sm text-muted-foreground">Generating response...</p>
               </div>
             </div>
           )}
@@ -128,25 +121,33 @@ export const AIChat = () => {
       </ScrollArea>
 
       {/* Input */}
-      <div className="p-4 border-t border-border">
-        <div className="flex gap-2">
+      <footer className="p-4 border-t border-border">
+        <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex gap-2">
           <Input
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Describe the app you want to create..."
+            onKeyDown={handleKeyPress}
+            placeholder="Describe the app you want to create... (Ctrl+K to clear)"
             className="flex-1"
             disabled={isGenerating}
+            aria-label="Message input"
+            aria-describedby="input-help"
+            maxLength={10000}
           />
+          <span id="input-help" className="sr-only">
+            Type your message and press Enter to send, or use Ctrl+K to clear the conversation
+          </span>
           <Button
-            onClick={handleSendMessage}
+            type="submit"
             disabled={!input.trim() || isGenerating}
             className="bg-gradient-primary hover:shadow-glow transition-smooth"
+            aria-label="Send message"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-4 h-4" aria-hidden="true" />
           </Button>
-        </div>
-      </div>
+        </form>
+      </footer>
     </div>
   );
 };
